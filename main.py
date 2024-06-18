@@ -1,16 +1,28 @@
-import streamlit as st
-import cv2
-import numpy as np
 from sklearn.svm import OneClassSVM
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
+from sklearn.externals import joblib
+import numpy as np
+import os
+
+# 훈련 이미지 데이터 path
+train_path = '/cotent/train/'
 
 # 이미지를 1차원 벡터로 변환하는 함수
-def image_to_vector(image):
-    img_gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)  # RGB 이미지를 흑백으로 변환
-    img_resized = cv2.resize(img_gray, (128, 128))  # 이미지 크기 조정 (원하는 크기로 설정)
-    img_vector = img_resized.flatten()  # 이미지를 1차원 벡터로 변환
+def image_to_vector(image_path):
+    img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)  # 흑백 이미지로 변환
+    img = cv2.resize(img, (128, 128))  # 이미지 크기 조정 (원하는 크기로 설정)
+    img_vector = img.flatten()  # 이미지를 1차원 벡터로 변환
     return img_vector
+
+# 학습할 데이터 폴더에서 정상 이미지 데이터를 로드
+normal_images = []
+for filename in os.listdir(train_path):
+    img_path = os.path.join(train_path, filename)
+    if os.path.isfile(img_path):
+        img_vector = image_to_vector(img_path)
+        normal_images.append(img_vector)
+normal_images = np.array(normal_images)
 
 # One-Class SVM 모델 생성
 svm_model = Pipeline([
@@ -18,31 +30,10 @@ svm_model = Pipeline([
     ("svm", OneClassSVM(kernel='rbf', gamma='auto')),  # One-Class SVM 모델
 ])
 
-# 학습할 정상 이미지 (임시 데이터)
-normal_images = np.random.rand(10, 128*128)  # 임의의 데이터로 대체 (실제로는 여기에 정상 이미지를 로드)
-
 # 모델 학습
 svm_model.fit(normal_images)
 
-# Streamlit 애플리케이션 정의
-st.title('이미지 이상 탐지 웹 애플리케이션')
-
-uploaded_file = st.file_uploader("이미지 파일 업로드", type=['jpg', 'png', 'jpeg'])
-
-if uploaded_file is not None:
-    # 업로드한 이미지 보기
-    image = np.array(cv2.imdecode(np.fromstring(uploaded_file.read(), np.uint8), 1))
-    st.image(image, caption='업로드된 이미지', use_column_width=True)
-    
-    # 이미지를 1차원 벡터로 변환
-    img_vector = image_to_vector(image)
-    img_vector = img_vector.reshape(1, -1)  # 모델에 입력할 수 있는 형태로 reshape
-    
-    # 이상 여부 예측
-    prediction = svm_model.predict(img_vector)
-    
-    # 결과 출력
-    if prediction == 1:
-        st.write("This track is Normal")
-    else:
-        st.write("This track is Abnormal")
+# 모델 저장하기
+model_filename = 'one_class_svm_model.pkl'
+joblib.dump(svm_model, model_filename)
+print(f"모델이 {model_filename} 파일로 저장되었습니다.")
