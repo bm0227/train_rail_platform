@@ -1,7 +1,6 @@
 import streamlit as st
 import numpy as np
 from PIL import Image
-import joblib
 import os
 
 st.title('AI-based system for railway condition recognition')
