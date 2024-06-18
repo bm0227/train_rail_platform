@@ -1,7 +1,7 @@
 import streamlit as st
 import numpy as np
 from PIL import Image
-from sklearn.externals import joblib
+import joblib
 import os
 
 # 이미지를 1차원 벡터로 변환하는 함수
@@ -14,7 +14,7 @@ def image_to_vector(image):
 
 # Streamlit 애플리케이션 정의
 def main():
-    st.title('AI-based system for railway condition recognition')
+    st.title('이미지 이상 탐지 웹 애플리케이션')
     
     # 저장된 모델 파일 경로
     model_filename = 'one_class_svm_model.pkl'
@@ -38,9 +38,9 @@ def main():
         
         # 결과 출력
         if prediction == 1:
-            st.write("This is Normal track.")
+            st.write("이 이미지는 정상 이미지입니다.")
         else:
-            st.write("This is Abnormal track.")
+            st.write("이 이미지는 비정상 이미지입니다.")
 
 if __name__ == '__main__':
     main()
